@@ -1,0 +1,96 @@
+---
+title: "HW3"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Inspiration for Graph
+I wanted to show how location affects housing costs. By luck I actually found dataset on kaggle while doing a tutorial completely separate from the class. This dataset shows housing costs in California. I wanted the user to be able to zoom in to different parts of the map, see actually labeled cities, and look at median prices of houses in a specific place.
+
+
+### Data Source
+Data for this graphic was collected from the following source:
+
+https://www.kaggle.com/datasets/dhirajnirne/california-housing-data
+
+
+### Data Prep
+```{r}
+library(readxl)
+library(dplyr)
+library(leaflet)
+```
+
+
+```{r}
+californiaHousing <- read_excel('C:/Users/Jeffrey/Desktop/My Documents/Grad School/Classes/Fall 2022/Staa 566/HW3/CaliforniaHousing.xlsx')	
+californiaHousing <- data.frame(californiaHousing)
+
+californiaHousing <- californiaHousing %>% filter(Subsample==1)
+
+
+```
+
+
+### Functionality and Formatting Reasoning:
+My computer struggled with the computing resourced needed to show this graph. There are 20,000 data points and I did accidentally plot all the data points initially and it took my computer 15 minutes to render the graph. Because of this, the first decision made (besides downsampling the data so R Studio would stop crashing) was to create a graph that would from a zoomed out view, just show how many markers were in the area. Then when a user zooms in to a location of interest, the actual data points would appear. Fortunatley leaflet has that function and it was easy to implement.
+
+### Spatial Units Being Displayed
+Once a user zooms into and finds an area of interest, I wanted detailed information to be available about the housing prices of a small geographical area. To do this I added information to the markers themselves. (Though the markers/info appear to render incorrectly on my machine.) Fortunately I found data that already aggregated median prices of a small area, so the markers simply report that as well as some other aggregated data.
+
+I also added a small minimap in the corner so users could still see the big picture of where they were while still zoomed in.
+
+
+```{r}
+
+
+leaflet(californiaHousing) %>%
+  addTiles() %>%
+  addProviderTiles(providers$Stamen.TonerLite, group = "Toner Lite") %>%
+  addProviderTiles(providers$Stamen.TonerLite, group = "OpenStreetMap") %>%
+addProviderTiles(providers$Esri.WorldImagery, group = "World Imagery") %>%
+
+addLayersControl(baseGroups = c("Toner Lite", "OpenStreetMap", "World Imagery")) %>%
+addMarkers(label =  paste(
+      "Median Home Cost: ", californiaHousing$median_house_value, ';', '<br>',
+      "Median Owner Income: ",
+      californiaHousing$median_income, ';','<br>',
+      "Proximity to Ocean: ", californiaHousing$ocean_proximity
+    ),clusterOptions = markerClusterOptions()) %>%
+  addMiniMap(zoomLevelOffset = -3, width = 80,
+  height = 80)
+```
+
+
+### Unused/Alternate Code
+```{r}
+
+### The below can be used in conjunction with awesome markers.
+# make_color <- function(x) {
+#   sapply(x$median_house_value, function(median_house_value) {
+#     if(median_house_value <= 200000) {
+#       "green"
+#     } else if(median_house_value <= 300000) {
+#       "orange"
+#     } else {
+#       "red"
+#     } })
+# }
+# 
+# # create icon format
+# icons <- awesomeIcons(
+#   icon = 'ios-close',
+#   iconColor = 'black',
+#   library = 'fa',   
+#   text=round(californiaHousing$median_house_value), 
+#   markerColor = make_color(californiaHousing)
+# )
+
+### AwesomeMarkers insert/option
+  # addAwesomeMarkers(~longitude, ~latitude, icon=icons, clusterOptions = markerClusterOptions())
+```
+
